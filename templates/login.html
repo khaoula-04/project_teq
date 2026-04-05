@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Farfalla — Connexion</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:   #1a3a6b;
+      --accent: #7c3aed;
+      --light:  #ede9fe;
+      --gray:   #6b7280;
+      --red:    #dc2626;
+      --green:  #059669;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1a0a3b 0%, #7c3aed 60%, #2563eb 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Floating butterflies background */
+    .bg-butterflies {
+      position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+    }
+    .bf {
+      position: absolute;
+      font-size: 28px;
+      opacity: 0.12;
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(100vh) rotate(0deg);   opacity: 0; }
+      10%  { opacity: 0.12; }
+      90%  { opacity: 0.12; }
+      100% { transform: translateY(-120px) rotate(360deg); opacity: 0; }
+    }
+
+    .wrapper {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 440px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex; background: rgba(255,255,255,.12);
+      border-radius: 16px 16px 0 0; overflow: hidden;
+    }
+    .tab {
+      flex: 1; padding: 14px;
+      text-align: center; font-size: 14px; font-weight: 700;
+      color: rgba(255,255,255,.6); cursor: pointer;
+      transition: all .2s; border: none; background: transparent;
+      font-family: inherit;
+    }
+    .tab.active { background: white; color: var(--accent); }
+
+    .card {
+      background: white;
+      border-radius: 0 0 20px 20px;
+      padding: 36px 36px 32px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    }
+
+    /* Logo */
+    .logo { text-align: center; margin-bottom: 28px; }
+    .logo-icon {
+      width: 140px; height: 90px;
+      display: inline-block; margin-bottom: 8px;
+    }
+    .logo h1 { display: none; }
+    .logo .tagline { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+    /* Form */
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--blue); margin-bottom: 5px; }
+    input, select {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid #e2e8f0; border-radius: 10px;
+      font-size: 14px; outline: none; font-family: inherit;
+      transition: border .2s, box-shadow .2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.12);
+    }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .error-msg {
+      background: #fef2f2; border: 1px solid #fecaca;
+      color: var(--red); padding: 10px 14px; border-radius: 8px;
+      font-size: 13px; margin-bottom: 18px;
+    }
+    .success-msg {
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+      color: var(--green); padding: 10px 14px; border-radius: 8px;
+      font-size: 13px; margin-bottom: 18px;
+    }
+
+    .btn {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, var(--accent), #2563eb);
+      color: white; border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: all .2s; font-family: inherit;
+      box-shadow: 0 4px 14px rgba(124,58,237,.35);
+    }
+    .btn:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,.45); }
+    .btn:active { transform: none; }
+
+    .divider {
+      text-align: center; font-size: 12px; color: var(--gray);
+      margin: 18px 0; position: relative;
+    }
+    .divider::before, .divider::after {
+      content: ''; position: absolute; top: 50%;
+      width: 42%; height: 1px; background: #e2e8f0;
+    }
+    .divider::before { left: 0; } .divider::after { right: 0; }
+
+    .switch-link {
+      text-align: center; font-size: 13px; color: var(--gray); margin-top: 16px;
+    }
+    .switch-link a { color: var(--accent); font-weight: 600; text-decoration: none; cursor: pointer; }
+    .switch-link a:hover { text-decoration: underline; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Floating butterflies -->
+<div class="bg-butterflies" id="bg"></div>
+
+<div class="wrapper">
+  <div class="tabs">
+    <button class="tab active" id="tab-login" onclick="switchTab('login')">Connexion</button>
+    <button class="tab" id="tab-register" onclick="switchTab('register')">Inscription</button>
+  </div>
+
+  <div class="card">
+    <div class="logo">
+      <img class="logo-icon" src="/static/farfalla_logo.svg" alt="Farfalla"/>
+      <h1>Farfalla</h1>
+      
+    </div>
+
+    <!-- ── LOGIN PANEL ── -->
+    <div class="panel active" id="panel-login">
+      {% if error %}
+      <div class="error-msg">⚠️ {{ error }}</div>
+      {% endif %}
+      {% if success %}
+      <div class="success-msg">✓ {{ success }}</div>
+      {% endif %}
+
+      <form method="POST" action="/login">
+        <div class="form-group">
+          <label for="username">Identifiant</label>
+          <input type="text" id="username" name="username" placeholder="Votre identifiant" autocomplete="username" required autofocus/>
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required/>
+        </div>
+        <button type="submit" class="btn">Se connecter</button>
+      </form>
+      <div class="switch-link">Pas encore de compte ? <a onclick="switchTab('register')">S'inscrire</a></div>
+    </div>
+
+    <!-- ── REGISTER PANEL ── -->
+    <div class="panel" id="panel-register">
+      {% if reg_error %}
+      <div class="error-msg">⚠️ {{ reg_error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/register">
+        <div class="input-row">
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" name="first_name" placeholder="Prénom" required/>
+          </div>
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" name="last_name" placeholder="Nom" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Identifiant</label>
+          <input type="text" name="username" placeholder="Choisissez un identifiant" required/>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <input type="password" name="password" placeholder="••••••••" required/>
+        </div>
+        <div class="form-group">
+          <label>Confirmer le mot de passe</label>
+          <input type="password" name="password2" placeholder="••••••••" required/>
+        </div>
+        <button type="submit" class="btn">Créer mon compte</button>
+      </form>
+      <div class="switch-link">Déjà un compte ? <a onclick="switchTab('login')">Se connecter</a></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Tabs
+  function switchTab(tab) {
+    ['login','register'].forEach(t => {
+      document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+      document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    });
+  }
+
+  // Auto-switch if register error
+  {% if reg_error %}switchTab('register');{% endif %}
+
+  // Floating butterflies
+  const bg = document.getElementById('bg');
+  for (let i = 0; i < 12; i++) {
+    const el = document.createElement('div');
+    el.className = 'bf';
+    el.textContent = '🦋';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.animationDuration = (12 + Math.random() * 16) + 's';
+    el.style.animationDelay = (Math.random() * 14) + 's';
+    el.style.fontSize = (20 + Math.random() * 24) + 'px';
+    bg.appendChild(el);
+  }
+</script>
+</body>
+</html>

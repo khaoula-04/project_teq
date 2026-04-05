@@ -1,0 +1,23 @@
+# Secrets — ne jamais committer la clé API
+.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Base de données locale
+data/students.db
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Build scripts temporaires
+_build_*.py

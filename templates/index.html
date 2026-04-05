@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farfalla — ENSA Béni Mellal</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:    #1a3a6b;
+      --accent:  #2563eb;
+      --light:   #dbeafe;
+      --green:   #059669;
+      --red:     #dc2626;
+      --yellow:  #d97706;
+      --gray:    #6b7280;
+      --lgray:   #f3f4f6;
+      --white:   #ffffff;
+      --bg:      #f0f4ff;
+      --code-bg: #1e293b;
+      --shadow:  0 2px 16px rgba(37,99,235,.10);
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: #1e293b;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      background: var(--blue);
+      color: white;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    header h1 { font-size: 16px; font-weight: 700; }
+    header p  { font-size: 11px; color: var(--light); margin-top: 1px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    /* Status badge */
+    #status-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+      transition: all .3s;
+    }
+    #status-badge.online  { background: rgba(5,150,105,.2); color: #6ee7b7; }
+    #status-badge.offline { background: rgba(220,38,38,.2); color: #fca5a5; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .online  .dot { background: var(--green); }
+    .offline .dot { background: var(--red); animation: none; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .5; transform: scale(1.3); }
+    }
+
+    /* Toggle button */
+    #toggle-btn {
+      padding: 6px 14px;
+      border: 1.5px solid rgba(255,255,255,.3);
+      background: transparent;
+      color: white;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    #toggle-btn:hover { background: rgba(255,255,255,.15); }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      gap: 0;
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────── */
+    .sidebar {
+      width: 260px;
+      background: var(--white);
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .sidebar-section {
+      padding: 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .sidebar-section h3 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--gray);
+      margin-bottom: 12px;
+    }
+
+    /* Student input */
+    .student-input label { font-size: 12px; color: var(--gray); display: block; margin-bottom: 4px; }
+    .student-input input {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      transition: border .2s;
+    }
+    .student-input input:focus { border-color: var(--accent); }
+
+    /* Stats */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      font-size: 13px;
+    }
+    .stat-row .label { color: var(--gray); }
+    .stat-row .value { font-weight: 700; color: var(--blue); }
+    .stat-row .value.green { color: var(--green); }
+    .stat-row .value.red   { color: var(--red); }
+
+    /* Stress indicator */
+    .stress-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .stress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .5s, background .5s;
+    }
+    .stress-label {
+      font-size: 11px;
+      margin-top: 4px;
+      font-weight: 600;
+      transition: color .3s;
+    }
+
+    /* History */
+    .history-item {
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s;
+      margin-bottom: 4px;
+    }
+    .history-item:hover { background: var(--lgray); }
+    .history-item .hq {
+      font-size: 12px; font-weight: 600; color: var(--blue);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .history-item .hm {
+      font-size: 11px; color: var(--gray); margin-top: 2px;
+    }
+    .source-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .source-cloud    { background: #dbeafe; color: #1d4ed8; }
+    .source-cache    { background: #d1fae5; color: #065f46; }
+    .source-degraded { background: #fef3c7; color: #92400e; }
+
+    /* ── Chat area ────────────────────────────────────────── */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Welcome banner */
+    .welcome {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray);
+    }
+    .welcome .icon { font-size: 48px; margin-bottom: 12px; }
+    .welcome h2 { font-size: 20px; color: var(--blue); margin-bottom: 8px; }
+    .welcome p  { font-size: 14px; line-height: 1.6; }
+    .quick-btns {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 8px; margin-top: 20px;
+    }
+    .quick-btn {
+      padding: 8px 16px;
+      background: var(--white);
+      border: 1.5px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .2s;
+      color: var(--blue);
+    }
+    .quick-btn:hover {
+      background: var(--light);
+      border-color: var(--accent);
+    }
+
+    /* Message bubbles */
+    .msg { display: flex; gap: 10px; max-width: 85%; }
+    .msg.user  { align-self: flex-end; flex-direction: row-reverse; }
+    .msg.bot   { align-self: flex-start; }
+
+    .avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .msg.user .avatar { background: var(--accent); }
+    .msg.bot  .avatar { background: var(--blue); }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.6;
+      box-shadow: var(--shadow);
+    }
+    .msg.user .bubble {
+      background: var(--accent);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.bot .bubble {
+      background: var(--white);
+      color: #1e293b;
+      border-bottom-left-radius: 4px;
+    }
+
+    /* Support alert inside bubble */
+    .support-alert {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-left: 3px solid var(--yellow);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #78350f;
+    }
+
+    /* Meta tags under bot message */
+    .msg-meta {
+      display: flex; gap: 6px; align-items: center;
+      margin-top: 4px; margin-left: 44px;
+      flex-wrap: wrap;
+    }
+    .meta-tag {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .meta-latency { background: #f0f9ff; color: #0369a1; }
+    .meta-source  { }
+    .meta-stress  { }
+
+    /* Typing indicator */
+    .typing { display: flex; gap: 4px; padding: 14px 16px; }
+    .typing span {
+      width: 8px; height: 8px;
+      background: var(--gray);
+      border-radius: 50%;
+      animation: bounce .8s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .15s; }
+    .typing span:nth-child(3) { animation-delay: .30s; }
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); }
+      40%          { transform: translateY(-8px); }
+    }
+
+    /* ── Input bar ────────────────────────────────────────── */
+    .input-area {
+      padding: 16px 24px;
+      background: var(--white);
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    #user-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 24px;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      max-height: 120px;
+      line-height: 1.5;
+      font-family: inherit;
+      transition: border .2s;
+    }
+    #user-input:focus { border-color: var(--accent); }
+    #send-btn {
+      width: 46px; height: 46px;
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all .2s;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #send-btn:hover { background: var(--blue); transform: scale(1.05); }
+    #send-btn:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+
+    /* Offline banner */
+    #offline-banner {
+      display: none;
+      background: #fef3c7;
+      border-bottom: 2px solid var(--yellow);
+      padding: 8px 24px;
+      font-size: 13px;
+      color: #78350f;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    /* Scrollbar */
+    #messages::-webkit-scrollbar { width: 5px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="logo">🤖</div>
+    <div>
+      <h1>Farfalla</h1>
+      <p>ENSA Béni Mellal — Module TEQ | Pr. TOUIL</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div id="status-badge" class="online">
+      <div class="dot"></div>
+      <span id="status-text">Cloud connecté</span>
+    </div>
+    <button id="toggle-btn" onclick="toggleMode()">Mode hors-ligne</button>
+  </div>
+</header>
+
+<!-- OFFLINE BANNER -->
+<div id="offline-banner">
+  ⚠️ Mode hors-ligne activé — L'assistant répond depuis le cache Edge local
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- Student ID -->
+    <div class="sidebar-section student-input">
+      <h3>Étudiant</h3>
+      <label>Identifiant</label>
+      <input type="text" id="student-id" value="student_001" placeholder="ex: student_001"/>
+    </div>
+
+    <!-- Live stats -->
+    <div class="sidebar-section">
+      <h3>Statistiques</h3>
+      <div class="stat-row">
+        <span class="label">Interactions</span>
+        <span class="value" id="stat-total">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="label">Cache Edge</span>
+        <span class="value green" id="stat-cache">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="label">Latence moy.</span>
+        <span class="value" id="stat-latency">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="label">Dernière source</span>
+        <span class="value" id="stat-source">—</span>
+      </div>
+    </div>
+
+    <!-- Stress indicator -->
+    <div class="sidebar-section">
+      <h3>Niveau de stress</h3>
+      <div class="stress-bar">
+        <div class="stress-fill" id="stress-fill" style="width:0%;background:var(--green)"></div>
+      </div>
+      <div class="stress-label" id="stress-label" style="color:var(--green)">Normal</div>
+    </div>
+
+    <!-- History -->
+    <div class="sidebar-section" style="flex:1">
+      <h3>Historique</h3>
+      <div id="history-list"></div>
+    </div>
+
+  </aside>
+
+  <!-- CHAT -->
+  <div class="chat-area">
+    <div id="messages">
+      <div class="welcome" id="welcome">
+        <div class="icon">🎓</div>
+        <h2>Bonjour ! Je suis votre assistant pédagogique.</h2>
+        <p>Je peux vous aider avec vos cours, répondre à vos questions<br>et proposer un planning personnalisé.</p>
+        <div class="quick-btns">
+          <button class="quick-btn" onclick="sendQuick('Explique-moi c\'est quoi le Edge Computing')">🔌 Edge Computing</button>
+          <button class="quick-btn" onclick="sendQuick('Qu\'est-ce qu\'un LLM ?')">🤖 LLM</button>
+          <button class="quick-btn" onclick="sendQuick('Propose-moi un planning de révision pour cette semaine')">📅 Planning</button>
+          <button class="quick-btn" onclick="sendQuick('Résume-moi le cours sur les réseaux de neurones')">📚 Résumé cours</button>
+          <button class="quick-btn" onclick="sendQuick('C\'est quoi l\'Industry 5.0 ?')">🏭 Industry 5.0</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <textarea id="user-input" rows="1"
+        placeholder="Posez votre question..."
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"></textarea>
+      <button id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let isOnline = true;
+  let lastLatency = null;
+
+  // ── Send message ─────────────────────────────────────────
+  async function sendMessage() {
+    const input  = document.getElementById("user-input");
+    const text   = input.value.trim();
+    const sid    = document.getElementById("student-id").value.trim() || "student_001";
+    if (!text) return;
+
+    document.getElementById("welcome")?.remove();
+    addMessage(text, "user");
+    input.value = "";
+    input.style.height = "auto";
+    setLoading(true);
+
+    const typing = addTyping();
+
+    try {
+      const res  = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, student_id: sid })
+      });
+      const data = await res.json();
+      typing.remove();
+      addBotMessage(data);
+      updateSidebar(data);
+      loadHistory();
+    } catch (e) {
+      typing.remove();
+      addBotMessage({ response: "Erreur de connexion au serveur.", source: "error", latency_ms: 0, stress_level: "normal" });
+    }
+
+    setLoading(false);
+    input.focus();
+  }
+
+  function sendQuick(text) {
+    document.getElementById("user-input").value = text;
+    sendMessage();
+  }
+
+  function handleKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  }
+
+  function autoResize(el) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+  }
+
+  // ── Render messages ──────────────────────────────────────
+  function addMessage(text, role) {
+    const msgs = document.getElementById("messages");
+    const div  = document.createElement("div");
+    div.className = `msg ${role}`;
+    div.innerHTML = `
+      <div class="avatar">${role === "user" ? "👤" : "🤖"}</div>
+      <div class="bubble">${escHtml(text)}</div>
+    `;
+    msgs.appendChild(div);
+    scrollBottom();
+    return div;
+  }
+
+  function addBotMessage(data) {
+    const msgs = document.getElementById("messages");
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "display:flex;flex-direction:column;align-self:flex-start;max-width:85%";
+
+    const row  = document.createElement("div");
+    row.className = "msg bot";
+
+    let content = "";
+    if (data.support) {
+      content += `<div class="support-alert">💛 ${escHtml(data.support)}</div>`;
+    }
+    content += escHtml(data.response).replace(/\n/g, "<br>");
+
+    row.innerHTML = `
+      <div class="avatar">🤖</div>
+      <div class="bubble">${content}</div>
+    `;
+
+    const srcColor = { cloud: "source-cloud", edge_cache: "source-cache", edge_local_degraded: "source-degraded" };
+    const srcLabel = { cloud: "☁ Cloud", edge_cache: "⚡ Cache Edge", edge_local_degraded: "📴 Mode dégradé" };
+    const stressColor = { normal: "#059669", mild_frustration: "#d97706", moderate_stress: "#ea580c", high_stress: "#dc2626" };
+
+    const meta = document.createElement("div");
+    meta.className = "msg-meta";
+    meta.innerHTML = `
+      <span class="meta-tag meta-latency">⏱ ${data.latency_ms}ms</span>
+      <span class="meta-tag meta-source ${srcColor[data.source] || 'source-cloud'}">${srcLabel[data.source] || data.source}</span>
+      <span class="meta-tag meta-stress" style="background:#f0fdf4;color:${stressColor[data.stress_level] || '#059669'}">${data.stress_level}</span>
+      <span class="meta-tag" style="background:#f1f5f9;color:#64748b">🗂 Cache: ${data.cache_size}</span>
+    `;
+
+    wrap.appendChild(row);
+    wrap.appendChild(meta);
+    msgs.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function addTyping() {
+    const msgs = document.getElementById("messages");
+    const div  = document.createElement("div");
+    div.className = "msg bot";
+    div.innerHTML = `
+      <div class="avatar">🤖</div>
+      <div class="bubble typing">
+        <span></span><span></span><span></span>
+      </div>
+    `;
+    msgs.appendChild(div);
+    scrollBottom();
+    return div;
+  }
+
+  // ── Sidebar ──────────────────────────────────────────────
+  function updateSidebar(data) {
+    lastLatency = data.latency_ms;
+    document.getElementById("stat-source").textContent =
+      { cloud: "Cloud", edge_cache: "Cache Edge", edge_local_degraded: "Mode dégradé" }[data.source] || data.source;
+    document.getElementById("stat-cache").textContent = data.cache_size + " entrées";
+    document.getElementById("stat-source").className =
+      "value " + (data.source === "edge_cache" ? "green" : data.source === "edge_local_degraded" ? "" : "");
+
+    // Stress bar
+    const levels = { normal: 0, mild_frustration: 25, moderate_stress: 60, high_stress: 100 };
+    const colors = { normal: "#059669", mild_frustration: "#d97706", moderate_stress: "#ea580c", high_stress: "#dc2626" };
+    const labels = { normal: "Normal", mild_frustration: "Légère frustration", moderate_stress: "Stress modéré", high_stress: "Stress élevé ⚠️" };
+    const pct = levels[data.stress_level] ?? 0;
+    const col = colors[data.stress_level] ?? "#059669";
+    document.getElementById("stress-fill").style.width   = pct + "%";
+    document.getElementById("stress-fill").style.background = col;
+    document.getElementById("stress-label").textContent  = labels[data.stress_level] || data.stress_level;
+    document.getElementById("stress-label").style.color  = col;
+
+    loadStats();
+  }
+
+  async function loadStats() {
+    const sid = document.getElementById("student-id").value.trim() || "student_001";
+    const res = await fetch(`/stats?student_id=${sid}`);
+    const s   = await res.json();
+    document.getElementById("stat-total").textContent   = s.total_interactions;
+    document.getElementById("stat-latency").textContent = (s.avg_latency_ms || 0) + " ms";
+  }
+
+  async function loadHistory() {
+    const sid = document.getElementById("student-id").value.trim() || "student_001";
+    const res = await fetch(`/history?student_id=${sid}`);
+    const rows = await res.json();
+    const list = document.getElementById("history-list");
+    list.innerHTML = "";
+    const srcLabel = { cloud: "cloud", edge_cache: "cache", edge_local_degraded: "offline" };
+    rows.slice(0, 6).forEach(r => {
+      const d = document.createElement("div");
+      d.className = "history-item";
+      d.innerHTML = `
+        <div class="hq">${escHtml(r.query)}</div>
+        <div class="hm">
+          <span class="source-tag source-${r.source === "edge_cache" ? "cache" : r.source === "edge_local_degraded" ? "degraded" : "cloud"}">
+            ${srcLabel[r.source] || r.source}
+          </span>
+          ${r.latency ? r.latency.toFixed(1) + "ms" : ""}
+        </div>
+      `;
+      d.onclick = () => {
+        document.getElementById("user-input").value = r.query;
+        document.getElementById("user-input").focus();
+      };
+      list.appendChild(d);
+    });
+  }
+
+  // ── Toggle online/offline ────────────────────────────────
+  async function toggleMode() {
+    const sid = document.getElementById("student-id").value.trim() || "student_001";
+    const res  = await fetch("/toggle-mode", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ student_id: sid })
+    });
+    const data = await res.json();
+    isOnline = data.cloud_available;
+
+    const badge  = document.getElementById("status-badge");
+    const text   = document.getElementById("status-text");
+    const btn    = document.getElementById("toggle-btn");
+    const banner = document.getElementById("offline-banner");
+
+    if (isOnline) {
+      badge.className  = "online";
+      text.textContent = "Cloud connecté";
+      btn.textContent  = "Mode hors-ligne";
+      banner.style.display = "none";
+    } else {
+      badge.className  = "offline";
+      text.textContent = "Hors-ligne";
+      btn.textContent  = "Rétablir cloud";
+      banner.style.display = "block";
+    }
+  }
+
+  // ── Utils ────────────────────────────────────────────────
+  function setLoading(v) {
+    document.getElementById("send-btn").disabled = v;
+  }
+  function scrollBottom() {
+    const m = document.getElementById("messages");
+    m.scrollTop = m.scrollHeight;
+  }
+  function escHtml(t) {
+    return String(t)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  // Init
+  loadStats();
+  loadHistory();
+</script>
+</body>
+</html>

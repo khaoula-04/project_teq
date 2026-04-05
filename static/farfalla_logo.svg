@@ -1,0 +1,69 @@
+<svg width="100%" viewBox="0 0 680 310" xmlns="http://www.w3.org/2000/svg">
+
+<!-- Upper left wing -->
+<path d="
+  M 340 240
+  C 320 210, 270 170, 220 155
+  C 175 142, 130 148, 100 165
+  C 68 183, 58 215, 72 240
+  C 86 265, 120 275, 165 270
+  C 210 265, 275 250, 320 245
+  Z
+" fill="#D7B3F5" stroke="#5B0FA8" stroke-width="3" fill-opacity="0.85"/>
+
+<!-- Upper right wing -->
+<path d="
+  M 340 240
+  C 355 210, 385 175, 415 158
+  C 445 142, 475 145, 492 162
+  C 510 180, 508 210, 490 228
+  C 470 248, 440 255, 400 252
+  C 370 249, 350 244, 340 240
+  Z
+" fill="#C39BD3" stroke="#5B0FA8" stroke-width="3" fill-opacity="0.85"/>
+
+<!-- Lower left wing -->
+<path d="
+  M 340 248
+  C 310 260, 250 278, 200 290
+  C 158 300, 118 298, 95 285
+  C 70 271, 65 248, 82 233
+  C 98 219, 130 218, 170 226
+  C 215 235, 290 248, 335 248
+  Z
+" fill="#B07FD4" stroke="#5B0FA8" stroke-width="2.5" fill-opacity="0.80"/>
+
+<!-- Lower right wing -->
+<path d="
+  M 340 248
+  C 355 258, 380 272, 410 280
+  C 435 287, 458 285, 472 275
+  C 487 264, 487 248, 472 238
+  C 458 228, 435 228, 410 234
+  C 385 240, 358 246, 340 248
+  Z
+" fill="#9B59B6" stroke="#5B0FA8" stroke-width="2.5" fill-opacity="0.80"/>
+
+<!-- Body -->
+<ellipse cx="340" cy="248" rx="9" ry="32" fill="#4B0082" stroke="#5B0FA8" stroke-width="1.5"/>
+
+<!-- Head -->
+<circle cx="340" cy="213" r="7" fill="#4B0082"/>
+
+<!-- Antenna left -->
+<path d="M 337 207 C 325 185, 305 168, 292 158" fill="none" stroke="#5B0FA8" stroke-width="2" stroke-linecap="round"/>
+<circle cx="291" cy="156" r="4" fill="#7D3AC1"/>
+
+<!-- Antenna right -->
+<path d="M 343 207 C 358 185, 376 168, 390 158" fill="none" stroke="#5B0FA8" stroke-width="2" stroke-linecap="round"/>
+<circle cx="391" cy="156" r="4" fill="#7D3AC1"/>
+
+<!-- Wing veins upper-left -->
+<path d="M 340 242 C 305 230, 245 200, 190 185" fill="none" stroke="#7D3AC1" stroke-width="1" stroke-opacity="0.45"/>
+<path d="M 340 245 C 295 248, 225 258, 170 264" fill="none" stroke="#7D3AC1" stroke-width="1" stroke-opacity="0.35"/>
+
+<!-- Wing vein upper-right -->
+<path d="M 340 242 C 365 232, 400 212, 425 200" fill="none" stroke="#7D3AC1" stroke-width="1" stroke-opacity="0.40"/>
+
+
+</svg>

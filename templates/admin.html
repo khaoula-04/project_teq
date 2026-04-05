@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Admin — Farfalla</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:   #1a3a6b;
+      --accent: #7c3aed;
+      --light:  #dbeafe;
+      --green:  #059669;
+      --red:    #dc2626;
+      --yellow: #d97706;
+      --gray:   #6b7280;
+      --lgray:  #f3f4f6;
+      --white:  #ffffff;
+      --bg:     #f0f4ff;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #1e293b; min-height: 100vh; }
+
+    /* Header */
+    header {
+      background: var(--blue); color: white;
+      padding: 0 28px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 46px; height: 36px; display: flex; align-items: center; justify-content: center; }
+    .logo img { width: 46px; height: 36px; object-fit: contain; filter: brightness(0) invert(1); }
+    header h1 { font-size: 16px; font-weight: 700; }
+    header p  { font-size: 11px; color: var(--light); }
+    .header-right { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+    .admin-badge { background: rgba(37,99,235,.3); color: var(--light); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    a.logout { padding: 6px 14px; border: 1.5px solid rgba(255,255,255,.3); color: white; border-radius: 20px; font-size: 12px; text-decoration: none; }
+    a.logout:hover { background: rgba(255,255,255,.15); }
+
+    /* Layout */
+    .layout { display: flex; min-height: calc(100vh - 60px); }
+
+    /* Nav */
+    nav {
+      width: 220px; background: var(--white); border-right: 1px solid #e2e8f0;
+      padding: 20px 0; flex-shrink: 0;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 20px; cursor: pointer; font-size: 14px;
+      color: var(--gray); transition: all .15s; border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--lgray); color: var(--blue); }
+    .nav-item.active { background: var(--light); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+    .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--gray); padding: 16px 20px 6px; }
+
+    /* Main */
+    main { flex: 1; padding: 28px; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    h2 { font-size: 22px; color: var(--blue); margin-bottom: 6px; }
+    .page-desc { font-size: 13px; color: var(--gray); margin-bottom: 24px; }
+
+    /* Stat cards */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--white); border-radius: 14px; padding: 20px;
+      box-shadow: 0 1px 8px rgba(37,99,235,.08); border-left: 4px solid var(--accent);
+    }
+    .stat-card.green  { border-left-color: var(--green); }
+    .stat-card.red    { border-left-color: var(--red); }
+    .stat-card.yellow { border-left-color: var(--yellow); }
+    .stat-card .label { font-size: 12px; color: var(--gray); margin-bottom: 6px; }
+    .stat-card .value { font-size: 30px; font-weight: 800; color: var(--blue); }
+    .stat-card .sub   { font-size: 11px; color: var(--gray); margin-top: 4px; }
+
+    /* Tables */
+    .card { background: var(--white); border-radius: 14px; padding: 20px; box-shadow: 0 1px 8px rgba(37,99,235,.08); margin-bottom: 20px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .card-title { font-size: 15px; font-weight: 700; color: var(--blue); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: var(--lgray); padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--gray); font-weight: 700; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbff; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+    .badge-admin   { background: #ede9fe; color: #7c3aed; }
+    .badge-student { background: #d1fae5; color: #065f46; }
+    .badge-cloud    { background: #dbeafe; color: #1d4ed8; }
+    .badge-cache    { background: #d1fae5; color: #065f46; }
+    .badge-degraded { background: #fef3c7; color: #92400e; }
+    .badge-stress-high     { background: #fee2e2; color: #991b1b; }
+    .badge-stress-moderate { background: #ffedd5; color: #9a3412; }
+    .badge-stress-mild     { background: #fef9c3; color: #713f12; }
+    .badge-stress-normal   { background: #f0fdf4; color: #166534; }
+
+    /* Buttons */
+    .btn { padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 600; transition: all .2s; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--blue); }
+    .btn-danger  { background: #fee2e2; color: var(--red); }
+    .btn-danger:hover  { background: #fecaca; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 16px; padding: 32px;
+      width: 100%; max-width: 440px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.3);
+    }
+    .modal h3 { font-size: 18px; color: var(--blue); margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--blue); margin-bottom: 5px; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0;
+      border-radius: 8px; font-size: 14px; outline: none; font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 14px; font-weight: 600; z-index: 200;
+      box-shadow: 0 4px 16px rgba(0,0,0,.2);
+      transition: opacity .3s; opacity: 0;
+    }
+    .toast.success { background: #d1fae5; color: #065f46; }
+    .toast.error   { background: #fee2e2; color: #991b1b; }
+    .toast.show    { opacity: 1; }
+
+    /* Alert dot */
+    .alert-dot {
+      display: inline-block; width: 8px; height: 8px;
+      background: var(--red); border-radius: 50; margin-left: 4px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .empty { text-align: center; padding: 32px; color: var(--gray); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo"><img src="/static/farfalla_logo.svg" alt="Farfalla"/></div>
+    <div>
+      <h1>Dashboard Admin</h1>
+      <p>Farfalla</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="admin-badge">👑 {{ user.full_name or user.username }}</span>
+    <a href="/logout" class="logout">Déconnexion</a>
+  </div>
+</header>
+
+<div class="layout">
+  <nav>
+    <div class="nav-section">Tableau de bord</div>
+    <div class="nav-item active" onclick="showPage('overview')">📊 Vue d'ensemble</div>
+    <div class="nav-item" onclick="showPage('alerts')">🚨 Alertes stress<span id="alert-dot"></span></div>
+    <div class="nav-section">Gestion</div>
+    <div class="nav-item" onclick="showPage('users')">👥 Utilisateurs</div>
+    <div class="nav-item" onclick="showPage('interactions')">💬 Interactions</div>
+  </nav>
+
+  <main>
+
+    <!-- ── OVERVIEW ── -->
+    <div class="page active" id="page-overview">
+      <h2>Vue d'ensemble</h2>
+      <p class="page-desc">Statistiques globales du système en temps réel.</p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">Total interactions</div>
+          <div class="value" id="ov-total">—</div>
+          <div class="sub">Toutes sources confondues</div>
+        </div>
+        <div class="stat-card green">
+          <div class="label">Utilisateurs</div>
+          <div class="value" id="ov-users">—</div>
+          <div class="sub">Comptes enregistrés</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="label">Latence moyenne</div>
+          <div class="value" id="ov-latency">—</div>
+          <div class="sub">Objectif : &lt; 200 ms</div>
+        </div>
+        <div class="stat-card red">
+          <div class="label">Alertes stress</div>
+          <div class="value" id="ov-alerts">—</div>
+          <div class="sub">high + moderate stress</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Répartition par source</span></div>
+          <div id="source-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Distribution du stress</span></div>
+          <div id="stress-chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALERTS ── -->
+    <div class="page" id="page-alerts">
+      <h2>🚨 Alertes de stress</h2>
+      <p class="page-desc">Étudiants ayant exprimé un stress élevé ou modéré.</p>
+      <div class="card">
+        <table>
+          <thead><tr><th>Étudiant</th><th>Message</th><th>Date / heure</th></tr></thead>
+          <tbody id="alerts-body"><tr><td colspan="3" class="empty">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── USERS ── -->
+    <div class="page" id="page-users">
+      <h2>👥 Gestion des utilisateurs</h2>
+      <p class="page-desc">Créez, consultez et supprimez des comptes.</p>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Comptes</span>
+          <button class="btn btn-primary" onclick="openModal()">+ Nouvel utilisateur</button>
+        </div>
+        <table>
+          <thead><tr><th>Identifiant</th><th>Nom complet</th><th>Rôle</th><th>Créé le</th><th>Actions</th></tr></thead>
+          <tbody id="users-body"><tr><td colspan="5" class="empty">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── INTERACTIONS ── -->
+    <div class="page" id="page-interactions">
+      <h2>💬 Toutes les interactions</h2>
+      <p class="page-desc">Historique global de toutes les conversations (50 dernières).</p>
+      <div class="card">
+        <table>
+          <thead><tr><th>Étudiant</th><th>Message</th><th>Stress</th><th>Source</th><th>Latence</th><th>Heure</th></tr></thead>
+          <tbody id="interactions-body"><tr><td colspan="6" class="empty">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal new user -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Créer un utilisateur</h3>
+    <div class="form-group">
+      <label>Identifiant *</label>
+      <input type="text" id="new-username" placeholder="ex: student2"/>
+    </div>
+    <div class="form-group">
+      <label>Nom complet</label>
+      <input type="text" id="new-fullname" placeholder="ex: Mohamed Alami"/>
+    </div>
+    <div class="form-group">
+      <label>Mot de passe *</label>
+      <input type="password" id="new-password" placeholder="••••••••"/>
+    </div>
+    <div class="form-group">
+      <label>Rôle</label>
+      <select id="new-role">
+        <option value="student">🎓 Étudiant</option>
+        <option value="admin">👑 Admin</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="createUser()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Nav ───────────────────────────────────────────────────
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (id === 'users')        loadUsers();
+    if (id === 'interactions') loadInteractions();
+    if (id === 'alerts')       loadAlerts();
+  }
+
+  // ── Overview ─────────────────────────────────────────────
+  async function loadOverview() {
+    const [stats, alerts] = await Promise.all([
+      fetch('/api/admin/stats').then(r => r.json()),
+      fetch('/api/admin/alerts').then(r => r.json()),
+    ]);
+
+    document.getElementById('ov-total').textContent   = stats.total_interactions;
+    document.getElementById('ov-users').textContent   = stats.total_users;
+    document.getElementById('ov-latency').textContent = stats.avg_latency_ms + ' ms';
+    document.getElementById('ov-alerts').textContent  = alerts.length;
+
+    if (alerts.length > 0) {
+      document.getElementById('alert-dot').innerHTML = '<span class="alert-dot"></span>';
+    }
+
+    // Source chart
+    const src = stats.by_source || {};
+    const total = Object.values(src).reduce((a,b)=>a+b,0)||1;
+    const srcLabels = { cloud: '☁ Cloud', edge_cache: '⚡ Cache Edge', edge_local_degraded: '📴 Dégradé' };
+    const srcColors = { cloud: '#2563eb', edge_cache: '#059669', edge_local_degraded: '#d97706' };
+    document.getElementById('source-chart').innerHTML = Object.entries(src).map(([k,v]) => `
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span>${srcLabels[k]||k}</span><span style="font-weight:700">${v} (${Math.round(v/total*100)}%)</span>
+        </div>
+        <div style="background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:${v/total*100}%;background:${srcColors[k]||'#2563eb'};height:100%;border-radius:4px;transition:width .5s"></div>
+        </div>
+      </div>`).join('') || '<div class="empty">Aucune donnée</div>';
+
+    // Stress chart
+    const stress = stats.stress_distribution || {};
+    const stotal = Object.values(stress).reduce((a,b)=>a+b,0)||1;
+    const stressLabels = { normal:'Normal', mild_frustration:'Légère frustration', moderate_stress:'Stress modéré', high_stress:'Stress élevé' };
+    const stressColors = { normal:'#059669', mild_frustration:'#d97706', moderate_stress:'#ea580c', high_stress:'#dc2626' };
+    document.getElementById('stress-chart').innerHTML = Object.entries(stress).map(([k,v]) => `
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span>${stressLabels[k]||k}</span><span style="font-weight:700">${v} (${Math.round(v/stotal*100)}%)</span>
+        </div>
+        <div style="background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:${v/stotal*100}%;background:${stressColors[k]||'#6b7280'};height:100%;border-radius:4px;transition:width .5s"></div>
+        </div>
+      </div>`).join('') || '<div class="empty">Aucune donnée</div>';
+  }
+
+  // ── Alerts ───────────────────────────────────────────────
+  async function loadAlerts() {
+    const data = await fetch('/api/admin/alerts').then(r => r.json());
+    const tbody = document.getElementById('alerts-body');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Aucune alerte pour le moment ✓</td></tr>'; return; }
+    tbody.innerHTML = data.map(a => `
+      <tr>
+        <td><span style="font-weight:600;color:var(--blue)">🎓 ${esc(a.student_id)}</span></td>
+        <td style="max-width:400px">${esc(a.query)}</td>
+        <td style="color:var(--gray);font-size:12px">${a.timestamp?.slice(0,19).replace('T',' ')||''}</td>
+      </tr>`).join('');
+  }
+
+  // ── Users ────────────────────────────────────────────────
+  async function loadUsers() {
+    const data = await fetch('/api/admin/users').then(r => r.json());
+    const tbody = document.getElementById('users-body');
+    tbody.innerHTML = data.map(u => `
+      <tr>
+        <td style="font-weight:600">${esc(u.username)}</td>
+        <td>${esc(u.full_name||'—')}</td>
+        <td><span class="badge badge-${u.role}">${u.role==='admin'?'👑 Admin':'🎓 Étudiant'}</span></td>
+        <td style="color:var(--gray);font-size:12px">${u.created_at?.slice(0,10)||''}</td>
+        <td>
+          ${u.username!=='admin'?`<button class="btn btn-danger btn-sm" onclick="deleteUser('${esc(u.username)}')">Supprimer</button>`:'<span style="color:var(--gray);font-size:12px">Protégé</span>'}
+        </td>
+      </tr>`).join('');
+  }
+
+  async function createUser() {
+    const username  = document.getElementById('new-username').value.trim();
+    const password  = document.getElementById('new-password').value.trim();
+    const full_name = document.getElementById('new-fullname').value.trim();
+    const role      = document.getElementById('new-role').value;
+    if (!username || !password) { showToast('Identifiant et mot de passe requis', 'error'); return; }
+    const res = await fetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, role, full_name })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeModal();
+      showToast('Utilisateur créé avec succès', 'success');
+      loadUsers();
+    } else {
+      showToast(data.error || 'Erreur', 'error');
+    }
+  }
+
+  async function deleteUser(username) {
+    if (!confirm(`Supprimer l'utilisateur "${username}" ?`)) return;
+    const res  = await fetch(`/api/admin/users/${username}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) { showToast('Utilisateur supprimé', 'success'); loadUsers(); }
+    else showToast(data.error || 'Erreur', 'error');
+  }
+
+  // ── Interactions ─────────────────────────────────────────
+  async function loadInteractions() {
+    const data = await fetch('/api/admin/interactions').then(r => r.json());
+    const tbody = document.getElementById('interactions-body');
+    const srcClass = { cloud:'badge-cloud', edge_cache:'badge-cache', edge_local_degraded:'badge-degraded' };
+    const stressClass = { normal:'badge-stress-normal', mild_frustration:'badge-stress-mild', moderate_stress:'badge-stress-moderate', high_stress:'badge-stress-high' };
+    tbody.innerHTML = data.map(i => `
+      <tr>
+        <td style="font-weight:600;color:var(--blue)">🎓 ${esc(i.student_id)}</td>
+        <td style="max-width:280px;font-size:12px">${esc(i.query.substring(0,80))}${i.query.length>80?'…':''}</td>
+        <td><span class="badge ${stressClass[i.stress]||''}">${i.stress||'—'}</span></td>
+        <td><span class="badge ${srcClass[i.source]||''}">${i.source||'—'}</span></td>
+        <td style="color:var(--gray)">${i.latency!=null?i.latency.toFixed(1)+' ms':'—'}</td>
+        <td style="color:var(--gray);font-size:11px">${(i.timestamp||'').slice(0,19).replace('T',' ')}</td>
+      </tr>`).join('') || '<tr><td colspan="6" class="empty">Aucune interaction</td></tr>';
+  }
+
+  // ── Modal ────────────────────────────────────────────────
+  function openModal()  { document.getElementById('modal').classList.add('open'); }
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    ['new-username','new-fullname','new-password'].forEach(id => document.getElementById(id).value='');
+  }
+  document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+  // ── Toast ────────────────────────────────────────────────
+  function showToast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Init
+  loadOverview();
+  setInterval(loadOverview, 15000);
+</script>
+</body>
+</html>
