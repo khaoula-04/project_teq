@@ -4,6 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Farfalla — Connexion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -15,8 +17,8 @@
       --green:  #059669;
     }
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #1a0a3b 0%, #7c3aed 60%, #2563eb 100%);
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f0828 0%, #7c3aed 55%, #1d4ed8 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -48,23 +50,25 @@
 
     /* Tabs */
     .tabs {
-      display: flex; background: rgba(255,255,255,.12);
-      border-radius: 16px 16px 0 0; overflow: hidden;
+      display: flex; background: rgba(255,255,255,.15);
+      border-radius: 20px 20px 0 0; overflow: hidden;
+      backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.2); border-bottom: none;
     }
     .tab {
-      flex: 1; padding: 14px;
+      flex: 1; padding: 15px;
       text-align: center; font-size: 14px; font-weight: 700;
-      color: rgba(255,255,255,.6); cursor: pointer;
-      transition: all .2s; border: none; background: transparent;
-      font-family: inherit;
+      color: rgba(255,255,255,.7); cursor: pointer;
+      transition: all .25s; border: none; background: transparent;
+      font-family: inherit; letter-spacing: .01em;
     }
-    .tab.active { background: white; color: var(--accent); }
+    .tab:hover { color: #fff; background: rgba(255,255,255,.08); }
+    .tab.active { background: white; color: var(--accent); border-radius: 18px 18px 0 0; }
 
     .card {
       background: white;
-      border-radius: 0 0 20px 20px;
-      padding: 36px 36px 32px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.35);
+      border-radius: 0 0 22px 22px;
+      padding: 38px 38px 34px;
+      box-shadow: 0 32px 80px rgba(0,0,0,.4);
     }
 
     /* Logo */
@@ -148,7 +152,7 @@
     <div class="logo">
       <img class="logo-icon" src="/static/farfalla_logo.svg" alt="Farfalla"/>
       <h1>Farfalla</h1>
-      
+      <div class="tagline">Assistant IA pour ENSA Béni Mellal</div>
     </div>
 
     <!-- ── LOGIN PANEL ── -->

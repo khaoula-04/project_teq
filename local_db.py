@@ -33,10 +33,13 @@ class LocalDatabase:
         """)
         c.execute("""
             CREATE TABLE IF NOT EXISTS student_planning (
-                student_id TEXT PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT NOT NULL,
                 courses TEXT,
-                preferences TEXT,
-                last_updated TEXT
+                exams TEXT,
+                hours_per_day INTEGER DEFAULT 4,
+                generated_plan TEXT,
+                created_at TEXT
             )
         """)
         c.execute("""
@@ -49,6 +52,17 @@ class LocalDatabase:
                 created_at TEXT
             )
         """)
+        # Migrations: add columns that may be missing from older DB versions
+        try:
+            c.execute("ALTER TABLE student_planning ADD COLUMN exams TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # column already exists
+        try:
+            c.execute("ALTER TABLE student_planning ADD COLUMN hours_per_day INTEGER DEFAULT 4")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
         conn.commit()
         conn.close()
         self._seed_default_users()
@@ -181,6 +195,40 @@ class LocalDatabase:
         conn.close()
         return [{"student_id": r[0], "query": r[1], "stress": r[2],
                  "source": r[3], "latency": r[4], "timestamp": r[5]} for r in rows]
+
+    def save_planning(self, student_id: str, courses: list, exams: list,
+                      hours_per_day: int, generated_plan: str):
+        import json
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO student_planning
+            (student_id, courses, exams, hours_per_day, generated_plan, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (student_id, json.dumps(courses, ensure_ascii=False),
+              json.dumps(exams, ensure_ascii=False),
+              hours_per_day, generated_plan, datetime.now().isoformat()))
+        conn.commit()
+        conn.close()
+
+    def get_latest_planning(self, student_id: str) -> dict | None:
+        import json
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute("""
+            SELECT courses, exams, hours_per_day, generated_plan, created_at
+            FROM student_planning WHERE student_id=?
+            ORDER BY created_at DESC LIMIT 1
+        """, (student_id,))
+        row = c.fetchone()
+        conn.close()
+        if row:
+            return {"courses": json.loads(row[0] or "[]"),
+                    "exams": json.loads(row[1] or "[]"),
+                    "hours_per_day": row[2],
+                    "generated_plan": row[3],
+                    "created_at": row[4]}
+        return None
 
     def get_stress_alerts(self, limit: int = 20) -> list:
         """Admin only — recent high_stress interactions."""

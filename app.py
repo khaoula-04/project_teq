@@ -137,7 +137,7 @@ def api_chat():
     stress      = assistant.stress_detector.analyze(user_input)
     edge_result = assistant.edge.process(user_input, student_id)
 
-    if edge_result["source"] in ("edge_cache", "edge_local_degraded"):
+    if edge_result["source"] in ("edge_cache", "edge_local_degraded", "edge_ollama"):
         response = edge_result["response"]
         source   = edge_result["source"]
         latency  = edge_result["latency_ms"]
@@ -153,13 +153,14 @@ def api_chat():
 
     total_latency = (time.time() - start) * 1000
     return jsonify({
-        "response":       response,
-        "support":        stress["message"],
-        "stress_level":   stress["level"],
-        "source":         source,
-        "latency_ms":     round(total_latency, 1),
-        "cache_size":     assistant.edge.get_cache_size(),
-        "cloud_available":assistant.edge.cloud_available,
+        "response":        response,
+        "support":         stress["message"],
+        "stress_level":    stress["level"],
+        "source":          source,
+        "latency_ms":      round(total_latency, 1),
+        "cache_size":      assistant.edge.get_cache_size(),
+        "cloud_available": assistant.edge.cloud_available,
+        "ollama_available":assistant.edge._ollama_available,
     })
 
 
@@ -182,8 +183,9 @@ def api_stats():
     assistant  = get_assistant(student_id)
     s = db.get_stats(student_id=student_id)
     return jsonify({**s,
-                    "cache_size":     assistant.edge.get_cache_size(),
-                    "cloud_available":assistant.edge.cloud_available})
+                    "cache_size":      assistant.edge.get_cache_size(),
+                    "cloud_available": assistant.edge.cloud_available,
+                    "ollama_available":assistant.edge._ollama_available})
 
 
 @app.route("/api/history")
@@ -196,6 +198,115 @@ def api_history():
          "source": r[3], "latency": r[4], "timestamp": r[5]}
         for r in rows
     ])
+
+
+# ══════════════════════════════════════════════════════════════
+#  STUDENT — PLANNING
+# ══════════════════════════════════════════════════════════════
+@app.route("/api/planning/generate", methods=["POST"])
+@login_required
+def api_planning_generate():
+    import time, openai, os
+    data         = request.json
+    courses      = data.get("courses", [])      # [{"name":"Maths","level":"difficile","hours":3}, ...]
+    exams        = data.get("exams", [])         # [{"name":"Maths","date":"2026-04-20"}, ...]
+    hours_per_day= int(data.get("hours_per_day", 4))
+    student_id   = session["user"]["username"]
+
+    if not courses:
+        return jsonify({"error": "Ajoutez au moins une matière."}), 400
+
+    # Build prompt
+    courses_txt = "\n".join(f"- {c['name']} (niveau: {c.get('level','moyen')}, {c.get('hours',2)}h/semaine souhaitées)" for c in courses)
+    exams_txt   = "\n".join(f"- {e['name']} le {e['date']}" for e in exams) if exams else "Aucun examen spécifié."
+    prompt = f"""Tu es Farfalla, un assistant pédagogique expert en planification d'études.
+
+Un étudiant de l'ENSA Béni Mellal a les matières suivantes :
+{courses_txt}
+
+Examens à venir :
+{exams_txt}
+
+Disponibilité : {hours_per_day} heures d'étude par jour.
+
+Génère un planning de révision détaillé pour les 7 prochains jours (lundi à dimanche).
+Pour chaque jour, indique :
+- Les matières à étudier avec le nombre d'heures
+- Les objectifs concrets de la session
+- Un conseil de méthode de travail
+
+Tiens compte des niveaux de difficulté pour prioriser. Commence par les matières difficiles. Inclus des pauses.
+Réponds en français, de façon claire et structurée."""
+
+    start = time.time()
+    try:
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini", max_tokens=1200,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        plan = completion.choices[0].message.content
+    except Exception as e:
+        return jsonify({"error": f"Erreur API : {str(e)}"}), 500
+
+    latency = round((time.time() - start) * 1000, 1)
+    db.save_planning(student_id, courses, exams, hours_per_day, plan)
+
+    return jsonify({"plan": plan, "latency_ms": latency})
+
+
+@app.route("/api/planning/saved")
+@login_required
+def api_planning_saved():
+    student_id = session["user"]["username"]
+    p = db.get_latest_planning(student_id)
+    return jsonify(p or {})
+
+
+# ══════════════════════════════════════════════════════════════
+#  STUDENT — RÉSUMÉ DE COURS
+# ══════════════════════════════════════════════════════════════
+@app.route("/api/resume", methods=["POST"])
+@login_required
+def api_resume():
+    import time, openai, os
+    data    = request.json
+    content = data.get("content", "").strip()
+    style   = data.get("style", "standard")   # standard | bullet | fiche
+
+    if not content:
+        return jsonify({"error": "Collez le contenu du cours à résumer."}), 400
+
+    style_instructions = {
+        "standard": "Rédige un résumé clair en paragraphes (300-400 mots).",
+        "bullet":   "Rédige un résumé sous forme de points clés (bullet points), organisés par thème.",
+        "fiche":    "Crée une fiche de révision structurée avec : Définitions clés, Concepts principaux, Formules/Méthodes, Points à retenir.",
+    }
+
+    prompt = f"""Tu es Farfalla, un assistant pédagogique pour étudiants de l'ENSA Béni Mellal.
+
+{style_instructions.get(style, style_instructions['standard'])}
+
+Voici le contenu du cours à traiter :
+---
+{content[:3000]}
+---
+
+Réponds en français."""
+
+    start = time.time()
+    try:
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini", max_tokens=800,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        result = completion.choices[0].message.content
+    except Exception as e:
+        return jsonify({"error": f"Erreur API : {str(e)}"}), 500
+
+    latency = round((time.time() - start) * 1000, 1)
+    return jsonify({"resume": result, "latency_ms": latency})
 
 
 # ══════════════════════════════════════════════════════════════

@@ -4,12 +4,14 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Admin — Farfalla</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --blue:   #1a3a6b;
       --accent: #7c3aed;
-      --light:  #dbeafe;
+      --light:  #ede9fe;
       --green:  #059669;
       --red:    #dc2626;
       --yellow: #d97706;
@@ -18,7 +20,7 @@
       --white:  #ffffff;
       --bg:     #f0f4ff;
     }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #1e293b; min-height: 100vh; }
+    body { font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #1e293b; min-height: 100vh; }
 
     /* Header */
     header {
@@ -65,15 +67,18 @@
     /* Stat cards */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
     .stat-card {
-      background: var(--white); border-radius: 14px; padding: 20px;
-      box-shadow: 0 1px 8px rgba(37,99,235,.08); border-left: 4px solid var(--accent);
+      background: var(--white); border-radius: 16px; padding: 22px;
+      box-shadow: 0 2px 12px rgba(37,99,235,.1); border-top: 3px solid var(--accent);
+      transition: transform .2s, box-shadow .2s;
     }
-    .stat-card.green  { border-left-color: var(--green); }
-    .stat-card.red    { border-left-color: var(--red); }
-    .stat-card.yellow { border-left-color: var(--yellow); }
-    .stat-card .label { font-size: 12px; color: var(--gray); margin-bottom: 6px; }
-    .stat-card .value { font-size: 30px; font-weight: 800; color: var(--blue); }
-    .stat-card .sub   { font-size: 11px; color: var(--gray); margin-top: 4px; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,99,235,.14); }
+    .stat-card.green  { border-top-color: var(--green); }
+    .stat-card.red    { border-top-color: var(--red); }
+    .stat-card.yellow { border-top-color: var(--yellow); }
+    .stat-card .icon  { font-size: 24px; margin-bottom: 10px; }
+    .stat-card .label { font-size: 12px; font-weight: 600; color: var(--gray); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+    .stat-card .value { font-size: 32px; font-weight: 800; color: var(--blue); line-height: 1; }
+    .stat-card .sub   { font-size: 11px; color: var(--gray); margin-top: 6px; }
 
     /* Tables */
     .card { background: var(--white); border-radius: 14px; padding: 20px; box-shadow: 0 1px 8px rgba(37,99,235,.08); margin-bottom: 20px; }
@@ -181,21 +186,25 @@
 
       <div class="stats-grid">
         <div class="stat-card">
+          <div class="icon">💬</div>
           <div class="label">Total interactions</div>
           <div class="value" id="ov-total">—</div>
           <div class="sub">Toutes sources confondues</div>
         </div>
         <div class="stat-card green">
+          <div class="icon">👥</div>
           <div class="label">Utilisateurs</div>
           <div class="value" id="ov-users">—</div>
           <div class="sub">Comptes enregistrés</div>
         </div>
         <div class="stat-card yellow">
+          <div class="icon">⚡</div>
           <div class="label">Latence moyenne</div>
           <div class="value" id="ov-latency">—</div>
           <div class="sub">Objectif : &lt; 200 ms</div>
         </div>
         <div class="stat-card red">
+          <div class="icon">🚨</div>
           <div class="label">Alertes stress</div>
           <div class="value" id="ov-alerts">—</div>
           <div class="sub">high + moderate stress</div>
